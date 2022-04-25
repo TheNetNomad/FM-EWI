@@ -36,15 +36,23 @@ int overblow = 0;
 bool isSounding;
 short delayLine[CHORUS_DELAY_LENGTH];
 
+#define BUTTON_THUMB 0;
+#define BUTTON_ONE 1;
+#define BUTTON_TWO 2;
+#define BUTTON_THREE 3;
+#define BUTTON_FOUR 4;
+#define BUTTON_FIVE 5;
+#define BUTTON_SIX 6;
+
 void setup() {
   AudioMemory(15);
-  pinMode(1, INPUT_PULLUP);//thumb
-  pinMode(7, INPUT_PULLUP);//top left
-  pinMode(2, INPUT_PULLUP);//middle left
-  pinMode(0, INPUT_PULLUP);//left bottom
-  pinMode(5, INPUT_PULLUP);//right top
-  pinMode(8, INPUT_PULLUP);//right middle
-  pinMode(6, INPUT_PULLUP);//right bottom
+  pinMode(BUTTON_THUMB, INPUT_PULLUP);
+  pinMode(BUTTON_ONE, INPUT_PULLUP);
+  pinMode(BUTTON_TWO, INPUT_PULLUP);
+  pinMode(BUTTON_THREE, INPUT_PULLUP);
+  pinMode(BUTTON_FOUR, INPUT_PULLUP);
+  pinMode(BUTTON_FIVE, INPUT_PULLUP);
+  pinMode(BUTTON_SIX, INPUT_PULLUP);
   waveform1.begin(WAVEFORM_SAWTOOTH);
   waveform1.frequency(440);
   waveform1.amplitude(0.8);
@@ -87,13 +95,13 @@ void loop() {
     oldform = form;
   }
 
-  if(digitalRead(7)){
-    if(digitalRead(2)){
+  if(digitalRead(BUTTON_ONE)){
+    if(digitalRead(BUTTON_TWO)){
       //C# 554.37
       targetFrequency = 554;
     }
     else{
-      if(digitalRead(5)){
+      if(digitalRead(BUTTON_FOUR)){
         //C 523.25
         targetFrequency = 523;
       }
@@ -103,8 +111,8 @@ void loop() {
       }
     }  
   }
-  else if(digitalRead(2)){
-    if(digitalRead(0)){
+  else if(digitalRead(BUTTON_TWO)){
+    if(digitalRead(BUTTON_THREE)){
       //B 493.88
       targetFrequency = 493;  
     }
@@ -113,8 +121,8 @@ void loop() {
       targetFrequency = 466;
     }
   }
-  else if(digitalRead(0)){
-    if(digitalRead(5)){
+  else if(digitalRead(BUTTON_THREE)){
+    if(digitalRead(BUTTON_FOUR)){
       //A 440.00
       targetFrequency = 440;  
     }
@@ -123,8 +131,8 @@ void loop() {
       targetFrequency = 415;
     }
   }
-  else if(digitalRead(5)){
-    if(digitalRead(8)){
+  else if(digitalRead(BUTTON_FOUR)){
+    if(digitalRead(BUTTON_FIVE)){
       //G 392.00
       targetFrequency = 392; 
     }
@@ -133,8 +141,8 @@ void loop() {
       targetFrequency = 349;
     }
   }
-  else if(digitalRead(8)){
-    if(digitalRead(6)){
+  else if(digitalRead(BUTTON_FIVE)){
+    if(digitalRead(BUTTON_SIX)){
       //F# 369.99
       targetFrequency = 370; 
     }
@@ -143,21 +151,19 @@ void loop() {
       targetFrequency = 311;
     }
   }
-  else if(digitalRead(6)){
+  else if(digitalRead(BUTTON_SIX)){
     //E 329.63
     targetFrequency = 330;
   }
-  else if(!digitalRead(6)){
+  else if(!digitalRead(BUTTON_SIX)){
     //low D 293.66  
     targetFrequency = 293;
   }
 
-  if(volume < 0.4){//if(volume < 0.52){
+  if(volume < 0.4){
       //TONGUE LAND
-      //volume = 0;  
       if(isSounding == 1){
-        //volume = 0.39;
-        fade1.fadeOut(50);//50  
+        fade1.fadeOut(50);/
       }
       isSounding = 0;
   }
@@ -168,86 +174,17 @@ void loop() {
     isSounding = 1;
   } 
   
-  //if(volume < 1.15){//if(volume < 1.25){
-    //targetFrequency = targetFrequency * 1;
-    //overblow = 0;  
-  //}
-  //else if(volume < 1.30){
-    //Serial.println("hey");
-    //if(overblow == 1){
-      //targetFrequency = targetFrequency * 2;
-      //overblow = 1;  
-    //}
-    //else{
-      //overblow = 0;
-    //}
-  //}
-  //else{
-    //targetFrequency = targetFrequency * 2;
-    //overblow = 1;  
-  //}
-
   if(!digitalRead(1)){
     frequency = targetFrequency * 2;  
   }
   else{
     frequency = targetFrequency;  
   }
-  /**
-  if(volume < 0.9){//0.9
-    overblow = 0;  
-  }
-  else if(volume > 1.05){//else if(volume > 1.05){
-    overblow = 1;  
-  }
-  
-  if(overblow == 1){
-    targetFrequency = targetFrequency * 2;  
-  }  
-  Serial.println(String(volume) + " " + String(overblow));
-  /**
-  if(overblow == 0){
-    if((digitalRead(1)) || (abs(frequency - targetFrequency) < 9)){
-      frequency = targetFrequency;
-    }
-    else{
-      if(frequency < targetFrequency){
-        frequency = frequency + 8;  
-      }
-      else if (frequency > targetFrequency ){
-        frequency = frequency - 8;  
-      }
-      delay(25);
-      //frequency = frequency * 2;//debug  
-    }  
-  }
-  else{
-    if((digitalRead(1)) || (abs(frequency - targetFrequency) < 17)){
-      frequency = targetFrequency;
-    }
-    else{
-      if(frequency < targetFrequency){
-        frequency = frequency + 16;  
-      }
-      else if (frequency > targetFrequency ){
-        frequency = frequency - 16;  
-      }
-      delay(25);
-      //frequency = frequency * 2;//debug  
-    }
-  }
-  **/
 
-  //Serial.println(String(analogRead(A1)) + " " + String(analogRead(A2)) + " " + String(analogRead(A4)));
   modKnobIn = analogRead(A7);
-  //if((modKnobIn > 13) && (modKnobIn < 1000)){
   modulation = (modKnobIn/1023);
-    //modulation = map(modKnobIn,0,1023,0,1);
-    //Serial.println(modulation);
   waveform1.amplitude(modulation);
-  //}
   freqKnobIn = analogRead(A6);
-  //if((freqKnobIn > 13) && (freqKnobIn < 1000)){
   mult = map(freqKnobIn,0,1023,1,11);
   switch (mult){
   case 1:

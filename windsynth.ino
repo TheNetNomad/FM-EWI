@@ -36,13 +36,14 @@ int overblow = 0;
 bool isSounding;
 short delayLine[CHORUS_DELAY_LENGTH];
 
-#define BUTTON_THUMB 0;
-#define BUTTON_ONE 1;
-#define BUTTON_TWO 2;
-#define BUTTON_THREE 3;
-#define BUTTON_FOUR 4;
-#define BUTTON_FIVE 5;
-#define BUTTON_SIX 6;
+#define BUTTON_THUMB 0
+#define BUTTON_ONE 1
+#define BUTTON_TWO 2
+#define BUTTON_THREE 3
+#define BUTTON_FOUR 4
+#define BUTTON_FIVE 5
+#define BUTTON_SIX 6
+#define SWITCH_ONE 7
 
 void setup() {
   AudioMemory(15);
@@ -53,6 +54,7 @@ void setup() {
   pinMode(BUTTON_FOUR, INPUT_PULLUP);
   pinMode(BUTTON_FIVE, INPUT_PULLUP);
   pinMode(BUTTON_SIX, INPUT_PULLUP);
+  pinMode(SWITCH_ONE, INPUT_PULLUP);
   waveform1.begin(WAVEFORM_SAWTOOTH);
   waveform1.frequency(440);
   waveform1.amplitude(0.8);
@@ -65,8 +67,14 @@ void setup() {
 
 void loop() {
   analogIn = analogRead(A0);
-  volume = 2 * (1 - (analogIn/1023));
-  Serial.println(String(volume) + " " + String(modulatorMult) + "->" + String(carrierMult));
+  if(digitalRead(SWITCH_ONE)){
+   volume = 2 * (1 - (analogIn/1023)); 
+  }
+  else{
+    volume = 0.75;
+  }
+  
+  Serial.println(String(volume) + " " + String(modulatorMult) + "->" + String(carrierMult) + digitalRead(SWITCH_ONE));
   
   formKnobIn = analogRead(A8);
   form = map(formKnobIn,0,1023,1,6);
@@ -102,23 +110,45 @@ void loop() {
     }
     else{
       if(digitalRead(BUTTON_FOUR)){
-        //C 523.25
-        targetFrequency = 523;
+        if(digitalRead(BUTTON_FIVE)){
+          //C 523.25
+          targetFrequency = 523;
+        }
+        else{
+          //high F# 739.99
+          targetFrequency = 740;
+        }
       }
       else{
-        //high D 587.33
-        targetFrequency = 587; 
+        if(digitalRead(BUTTON_FIVE)){
+          if(digitalRead(BUTTON_SIX)){
+            //high F 698.46
+            targetFrequency = 698; 
+          }
+          else{
+           //high D# 622.25
+           targetFrequency = 622; 
+          }
+        }
+        else if(digitalRead(BUTTON_SIX)){
+          //high E 659.25
+          targetFrequency = 659;
+        }
+        else{
+          //high D 587.33
+          targetFrequency = 587;
+        } 
       }
     }  
   }
   else if(digitalRead(BUTTON_TWO)){
     if(digitalRead(BUTTON_THREE)){
       //B 493.88
-      targetFrequency = 493;  
+      targetFrequency = 494;  
     }
     else{
       //A# 466.16
-      targetFrequency = 466;
+      targetFrequency = 467;
     }
   }
   else if(digitalRead(BUTTON_THREE)){
@@ -161,9 +191,8 @@ void loop() {
   }
 
   if(volume < 0.4){
-      //TONGUE LAND
       if(isSounding == 1){
-        fade1.fadeOut(50);/
+        fade1.fadeOut(50);
       }
       isSounding = 0;
   }
@@ -174,7 +203,7 @@ void loop() {
     isSounding = 1;
   } 
   
-  if(!digitalRead(1)){
+  if(!digitalRead(BUTTON_THUMB)){
     frequency = targetFrequency * 2;  
   }
   else{
@@ -238,11 +267,6 @@ void loop() {
   }
   sine_fm1.frequency(frequency * carrierMult);
   waveform1.frequency(frequency * modulatorMult);
-  if(overblow == 1){
-    sine_fm1.amplitude(volume);//sine_fm1.amplitude(volume-0.5);
-  }
-  else{
-    sine_fm1.amplitude(volume); 
-  }
+  sine_fm1.amplitude(volume / 2);
   //Serial.println("MOD VOL: " + String(modulation)+ "/" + String(modKnobIn) + " MULT: " + String(mult) + "//" + String(freqKnobIn) + " BREATH: " + String(volume));
 }

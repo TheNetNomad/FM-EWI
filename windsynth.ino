@@ -48,6 +48,7 @@ int timer = 0;
 #define BUTTON_SIX 6
 #define SWITCH_ONE 7
 #define PEDAL_ONE 8
+#define LED 13
 
 void setup() {
   AudioMemory(15);
@@ -60,6 +61,7 @@ void setup() {
   pinMode(BUTTON_SIX, INPUT_PULLUP);
   pinMode(SWITCH_ONE, INPUT_PULLUP);
   pinMode(PEDAL_ONE, INPUT_PULLUP);
+  pinMode(LED, OUTPUT);
   waveform1.begin(WAVEFORM_SAWTOOTH);
   waveform1.frequency(440);
   waveform1.amplitude(0.8);
@@ -83,28 +85,28 @@ void loop() {
   //Serial.println(String(volume) + " " + String(modulatorMult) + "->" + String(carrierMult) + digitalRead(PEDAL_ONE));
   
   formKnobIn = analogRead(A8);
-  form = map(formKnobIn,0,1023,1,6);
+  form = map(formKnobIn,0,1023,1,7);
   if(oldform != form){
     if(form == 1){
       waveform1.begin(WAVEFORM_SINE);  
     }
     else if(form == 2){
-      waveform1.begin(WAVEFORM_SQUARE);
+      waveform1.begin(WAVEFORM_TRIANGLE);
     }
     else if(form == 3){
-      waveform1.begin(WAVEFORM_PULSE);
-      waveform1.pulseWidth(0.875);
+      waveform1.begin(WAVEFORM_BANDLIMIT_SAWTOOTH);
     }
     else if(form == 4){
-      waveform1.begin(WAVEFORM_PULSE);
-      waveform1.pulseWidth(0.75);
+      waveform1.begin(WAVEFORM_BANDLIMIT_SAWTOOTH_REVERSE);
     }
     else if(form == 5){
-      waveform1.begin(WAVEFORM_PULSE);
-      waveform1.pulseWidth(0.125);
+      waveform1.begin(WAVEFORM_SAWTOOTH);
     }
-    else{
-      waveform1.begin(WAVEFORM_SAWTOOTH);  
+    else if(form == 6){
+      waveform1.begin(WAVEFORM_SAWTOOTH_REVERSE);
+    }
+    else if(form == 7){
+      waveform1.begin(WAVEFORM_SQUARE);
     }
     oldform = form;
   }
@@ -121,8 +123,14 @@ void loop() {
           targetFrequency = 523;
         }
         else{
-          //high F# 739.99
-          targetFrequency = 740;
+          if(digitalRead(BUTTON_SIX)){
+            //high F# 739.99
+            targetFrequency = 740;  
+          }
+          else{
+            //high D# 622.25
+            targetFrequency = 622; 
+          }
         }
       }
       else{
@@ -179,8 +187,14 @@ void loop() {
   }
   else if(digitalRead(BUTTON_FIVE)){
     if(digitalRead(BUTTON_SIX)){
-      //F# 369.99
-      targetFrequency = 370; 
+      if(digitalRead(BUTTON_SIX)){
+        //F# 369.99
+        targetFrequency = 370; 
+      }
+      else{
+        //D# 311.13
+        targetFrequency = 311; 
+      }
     }
     else{
       //D# 311.13
@@ -199,12 +213,14 @@ void loop() {
   if(volume < 0.35){
       if(isSounding == 1){
         fade1.fadeOut(50);
+        digitalWrite(LED, LOW);
       }
       isSounding = 0;
   }
   else{
     if(isSounding == 0){
-      fade1.fadeIn(50);//25  
+      fade1.fadeIn(50);//25
+      digitalWrite(LED,HIGH);  
     }  
     isSounding = 1;
   } 

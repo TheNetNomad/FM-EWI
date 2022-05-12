@@ -35,6 +35,7 @@ int oldform = 1;
 int overblow = 0;
 bool isSounding;
 short delayLine[CHORUS_DELAY_LENGTH];
+int timer = 0;
 
 #define BUTTON_THUMB 0
 #define BUTTON_ONE 1
@@ -44,6 +45,7 @@ short delayLine[CHORUS_DELAY_LENGTH];
 #define BUTTON_FIVE 5
 #define BUTTON_SIX 6
 #define SWITCH_ONE 7
+#define PEDAL_ONE 8
 
 void setup() {
   AudioMemory(15);
@@ -55,6 +57,7 @@ void setup() {
   pinMode(BUTTON_FIVE, INPUT_PULLUP);
   pinMode(BUTTON_SIX, INPUT_PULLUP);
   pinMode(SWITCH_ONE, INPUT_PULLUP);
+  pinMode(PEDAL_ONE, INPUT_PULLUP);
   waveform1.begin(WAVEFORM_SAWTOOTH);
   waveform1.frequency(440);
   waveform1.amplitude(0.8);
@@ -74,7 +77,7 @@ void loop() {
     volume = 0.75;
   }
   
-  Serial.println(String(volume) + " " + String(modulatorMult) + "->" + String(carrierMult) + digitalRead(SWITCH_ONE));
+  Serial.println(String(volume) + " " + String(modulatorMult) + "->" + String(carrierMult) + digitalRead(PEDAL_ONE));
   
   formKnobIn = analogRead(A8);
   form = map(formKnobIn,0,1023,1,6);
@@ -204,10 +207,26 @@ void loop() {
   } 
   
   if(!digitalRead(BUTTON_THUMB)){
-    frequency = targetFrequency * 2;  
+    targetFrequency = targetFrequency * 2;  
+  }
+
+  timer++;
+  if(timer > 10){
+    timer = 0;  
+  }
+  
+  if(digitalRead(PEDAL_ONE)){
+    if(timer == 0){
+      if(frequency < targetFrequency){
+        frequency += 1;
+      }
+      else if(frequency > targetFrequency){
+        frequency -= 1;  
+      }
+    }
   }
   else{
-    frequency = targetFrequency;  
+    frequency = targetFrequency;
   }
 
   modKnobIn = analogRead(A7);

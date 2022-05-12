@@ -3,6 +3,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <SerialFlash.h>
+#include <Smoothed.h>
 
 // GUItool: begin automatically generated code
 AudioSynthWaveform       waveform1;      //xy=93,201
@@ -20,7 +21,7 @@ AudioConnection          patchCord4(chorus1, dac1);
 
 float analogIn = 0;
 float volume = 0;
-float targetVolume;
+Smoothed <float> volumeSensor;
 float modulation = 0;
 int frequency = 0;
 int targetFrequency = 0;
@@ -36,6 +37,7 @@ int overblow = 0;
 bool isSounding;
 short delayLine[CHORUS_DELAY_LENGTH];
 int timer = 0;
+
 
 #define BUTTON_THUMB 0
 #define BUTTON_ONE 1
@@ -65,19 +67,20 @@ void setup() {
   sine_fm1.amplitude(1.00);
   chorus1.begin(delayLine,CHORUS_DELAY_LENGTH,1);
   //chorus1.begin(delayLine,CHORUS_DELAY_LENGTH,2);
+  volumeSensor.begin(SMOOTHED_AVERAGE, 60);
   Serial.begin(9800);
 }
 
 void loop() {
-  analogIn = analogRead(A0);
   if(digitalRead(SWITCH_ONE)){
-   volume = 2 * (1 - (analogIn/1023)); 
-  }
+    volumeSensor.add(analogRead(A0));
+    volume = 2 * (1 - (volumeSensor.get()/1023));
+  }  
   else{
     volume = 0.75;
   }
   
-  Serial.println(String(volume) + " " + String(modulatorMult) + "->" + String(carrierMult) + digitalRead(PEDAL_ONE));
+  //Serial.println(String(volume) + " " + String(modulatorMult) + "->" + String(carrierMult) + digitalRead(PEDAL_ONE));
   
   formKnobIn = analogRead(A8);
   form = map(formKnobIn,0,1023,1,6);
@@ -193,7 +196,7 @@ void loop() {
     targetFrequency = 293;
   }
 
-  if(volume < 0.4){
+  if(volume < 0.35){
       if(isSounding == 1){
         fade1.fadeOut(50);
       }
@@ -201,7 +204,7 @@ void loop() {
   }
   else{
     if(isSounding == 0){
-      fade1.fadeIn(1);//25  
+      fade1.fadeIn(50);//25  
     }  
     isSounding = 1;
   } 

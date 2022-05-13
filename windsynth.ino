@@ -23,8 +23,9 @@ float analogIn = 0;
 float volume = 0;
 Smoothed <float> volumeSensor;
 float modulation = 0;
-int frequency = 0;
-int targetFrequency = 0;
+float frequency = 0;
+float targetFrequency = 0;
+float oldTargetFrequency = 0;
 int freqKnobIn = 0;
 float modKnobIn = 0;
 int formKnobIn = 0;
@@ -37,7 +38,9 @@ int overblow = 0;
 bool isSounding;
 short delayLine[CHORUS_DELAY_LENGTH];
 int timer = 0;
-
+int vibratoDelay = 0;
+int vibratoTable[24] = {0,1,2,3,4,5,6,5,4,3,2,1,0, -1, -2, -3, -4, -5, -6, -5, -4, -3, -2, -1};
+int vibratoPhase = 0;
 
 #define BUTTON_THUMB 0
 #define BUTTON_ONE 1
@@ -114,22 +117,22 @@ void loop() {
   if(digitalRead(BUTTON_ONE)){
     if(digitalRead(BUTTON_TWO)){
       //C# 554.37
-      targetFrequency = 554;
+      targetFrequency = 554.37;
     }
     else{
       if(digitalRead(BUTTON_FOUR)){
         if(digitalRead(BUTTON_FIVE)){
           //C 523.25
-          targetFrequency = 523;
+          targetFrequency = 523.25;
         }
         else{
           if(digitalRead(BUTTON_SIX)){
             //high F# 739.99
-            targetFrequency = 740;  
+            targetFrequency = 739.99;  
           }
           else{
             //high D# 622.25
-            targetFrequency = 622; 
+            targetFrequency = 622.25; 
           }
         }
       }
@@ -137,20 +140,20 @@ void loop() {
         if(digitalRead(BUTTON_FIVE)){
           if(digitalRead(BUTTON_SIX)){
             //high F 698.46
-            targetFrequency = 698; 
+            targetFrequency = 698.46; 
           }
           else{
            //high D# 622.25
-           targetFrequency = 622; 
+           targetFrequency = 622.25; 
           }
         }
         else if(digitalRead(BUTTON_SIX)){
           //high E 659.25
-          targetFrequency = 659;
+          targetFrequency = 659.25;
         }
         else{
           //high D 587.33
-          targetFrequency = 587;
+          targetFrequency = 587.33;
         } 
       }
     }  
@@ -158,57 +161,64 @@ void loop() {
   else if(digitalRead(BUTTON_TWO)){
     if(digitalRead(BUTTON_THREE)){
       //B 493.88
-      targetFrequency = 494;  
+      targetFrequency = 493.88;  
     }
     else{
       //A# 466.16
-      targetFrequency = 467;
+      targetFrequency = 466.16;
     }
   }
   else if(digitalRead(BUTTON_THREE)){
     if(digitalRead(BUTTON_FOUR)){
       //A 440.00
-      targetFrequency = 440;  
+      targetFrequency = 440.00;  
     }
     else{
       //G# 415.30
-      targetFrequency = 415;
+      targetFrequency = 415.30;
     }
   }
   else if(digitalRead(BUTTON_FOUR)){
     if(digitalRead(BUTTON_FIVE)){
       //G 392.00
-      targetFrequency = 392; 
+      targetFrequency = 392.00; 
     }
     else{
       //F 349.23
-      targetFrequency = 349;
+      targetFrequency = 349.23;
     }
   }
   else if(digitalRead(BUTTON_FIVE)){
     if(digitalRead(BUTTON_SIX)){
       if(digitalRead(BUTTON_SIX)){
         //F# 369.99
-        targetFrequency = 370; 
+        targetFrequency = 369.99; 
       }
       else{
         //D# 311.13
-        targetFrequency = 311; 
+        targetFrequency = 311.13; 
       }
     }
     else{
       //D# 311.13
-      targetFrequency = 311;
+      targetFrequency = 311.13;
     }
   }
   else if(digitalRead(BUTTON_SIX)){
     //E 329.63
-    targetFrequency = 330;
+    targetFrequency = 329.63;
   }
   else if(!digitalRead(BUTTON_SIX)){
     //low D 293.66  
-    targetFrequency = 293;
+    targetFrequency = 293.66;
   }
+
+  if(targetFrequency != oldTargetFrequency){
+    vibratoDelay = 0;
+    vibratoPhase = 0;
+    oldTargetFrequency = targetFrequency;  
+  }
+  
 
   if(volume < 0.35){
       if(isSounding == 1){
@@ -220,7 +230,9 @@ void loop() {
   else{
     if(isSounding == 0){
       fade1.fadeIn(50);//25
-      digitalWrite(LED,HIGH);  
+      digitalWrite(LED,HIGH); 
+      vibratoDelay = 0; 
+      vibratoPhase = 0;
     }  
     isSounding = 1;
   } 
@@ -230,12 +242,24 @@ void loop() {
   }
 
   timer++;
-  if(timer > 10){
+  if(timer > 20){
     timer = 0;  
   }
   
+  if(timer == 0){
+    if(vibratoDelay < 75){
+      vibratoDelay++;  
+    }
+    else{
+      vibratoPhase++;
+      if(vibratoPhase == 24){
+        vibratoPhase = 0;  
+      }  
+    }
+  }
+  
   if(digitalRead(PEDAL_ONE)){
-    if(timer == 0){
+    if((timer == 0) || (timer == 10)){
       if(frequency < targetFrequency){
         frequency += 1;
       }
@@ -245,7 +269,8 @@ void loop() {
     }
   }
   else{
-    frequency = targetFrequency;
+    frequency = targetFrequency + (vibratoTable[vibratoPhase] * (2 - digitalRead(BUTTON_THUMB)));
+    Serial.println(vibratoDelay);
   }
 
   modKnobIn = analogRead(A7);

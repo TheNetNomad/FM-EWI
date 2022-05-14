@@ -19,7 +19,7 @@ AudioConnection          patchCord4(chorus1, dac1);
 
 #define CHORUS_DELAY_LENGTH (32*AUDIO_BLOCK_SAMPLES)
 
-float analogIn = 0;
+float analogIn;
 float volume = 0;
 Smoothed <float> volumeSensor;
 float modulation = 0;
@@ -71,7 +71,6 @@ void setup() {
   sine_fm1.frequency(440*2);
   sine_fm1.amplitude(1.00);
   chorus1.begin(delayLine,CHORUS_DELAY_LENGTH,1);
-  //chorus1.begin(delayLine,CHORUS_DELAY_LENGTH,2);
   volumeSensor.begin(SMOOTHED_AVERAGE, 60);
   Serial.begin(9800);
 }
@@ -213,6 +212,10 @@ void loop() {
     targetFrequency = 293.66;
   }
 
+  if(!digitalRead(BUTTON_THUMB)){
+    targetFrequency = targetFrequency * 2;  
+  }
+
   if(targetFrequency != oldTargetFrequency){
     vibratoDelay = 0;
     vibratoPhase = 0;
@@ -236,10 +239,6 @@ void loop() {
     }  
     isSounding = 1;
   } 
-  
-  if(!digitalRead(BUTTON_THUMB)){
-    targetFrequency = targetFrequency * 2;  
-  }
 
   timer++;
   if(timer > 20){
@@ -270,7 +269,7 @@ void loop() {
   }
   else{
     frequency = targetFrequency + (vibratoTable[vibratoPhase] * (2 - digitalRead(BUTTON_THUMB)));
-    Serial.println(vibratoDelay);
+    //Serial.println(vibratoDelay);
   }
 
   modKnobIn = analogRead(A7);
